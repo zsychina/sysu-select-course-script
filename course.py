@@ -14,7 +14,7 @@ import base64
 
 # 要抢的课程
 courses_wanted = ['DCS5234']
-
+math_courses_wanted = ['专硕矩阵分析']
 
 
 with open('account.json', 'r') as file:
@@ -111,7 +111,10 @@ new_handle = all_handles[-1]
 driver.switch_to.window(new_handle)
 
 
+round = 1
 while True:
+    print(f'-----------round {round}---------------')
+    round += 1
     # 滚动屏幕
     cms_html_height = driver.execute_script('return document.documentElement.scrollHeight')
     cms_html_height_next = None
@@ -155,6 +158,35 @@ while True:
                 if free_count > 0 and not course_selected:
                     # registration_button.click()
                     print(f'{course_title}已点击')
+
+            # 选数学课
+            if course_code == "DCS6703": 
+                course_subdir_text = course_li.find_element(By.XPATH, "./div[1]/div[2]/span[3]").text
+                for subdir in math_courses_wanted:
+                    if subdir in course_subdir_text:
+                        # 选课
+                        registration_button = course_li.find_element(By.XPATH, ".//div[@class='stu-xk-bot-r-unfiltrate']/button[@class='ant-btn ant-btn-primary ant-btn-background-ghost']")
+                        course_selected = False
+                        button_text = registration_button.find_element(By.XPATH, './span').text
+                        if button_text == '选 课':
+                            course_selected = False
+                        elif button_text == '退 课':
+                            course_selected = True
+                        else:
+                            raise ValueError(f'course_selected = {course_selected}')
+                        
+                        free_count = int(course_li.find_element(By.XPATH, "./div[2]/div[3]/p[2]").text)
+                        print(f'{course_title} 剩余空位：{free_count}')
+                        
+                        if free_count > 0 and not course_selected:
+                            registration_button.click()
+                            print(f'{course_title} 已点击')                        
+                        elif free_count <= 0:
+                            print(f'{course_title} 容量不足')
+                        elif course_selected:
+                            print(f'{course_title} 已选上，无需再选')
+                        
+
 
     # 刷新屏幕
     driver.refresh()
