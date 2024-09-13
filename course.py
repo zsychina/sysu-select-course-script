@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 import requests
 import json
 from PIL import Image
@@ -13,7 +14,7 @@ import base64
 
 
 # 要抢的课程
-courses_wanted = ['DCS5234']
+courses_wanted = ['DCS5206']
 math_courses_wanted = ['专硕矩阵分析']
 
 
@@ -26,8 +27,11 @@ access_token = account['access_token']
 
 os.environ['NO_PROXY'] = '*'
 
+
+chrome_options = Options()
+chrome_options.add_argument('--headless')
 service = Service(executable_path='./chromedriver-mac-arm64/chromedriver')
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(options=chrome_options, service=service)
 
 # 1. 选课登陆
 driver.get('https://cms.sysu.edu.cn/#/login')
@@ -156,8 +160,13 @@ while True:
                 print(f'{course_title} 剩余空位：{free_count}')
                 
                 if free_count > 0 and not course_selected:
-                    # registration_button.click()
-                    print(f'{course_title}已点击')
+                    registration_button.click()
+                    print(f'{course_title} 已点击')
+                elif free_count <= 0:
+                    print(f'{course_title} 容量不足')
+                elif course_selected:
+                    print(f'{course_title} 已选上，无需再选')
+
 
             # 选数学课
             if course_code == "DCS6703": 
