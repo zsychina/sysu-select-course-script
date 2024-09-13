@@ -110,45 +110,55 @@ all_handles = driver.window_handles
 new_handle = all_handles[-1]
 driver.switch_to.window(new_handle)
 
-# 滚动屏幕
-cms_html_height = driver.execute_script('return document.documentElement.scrollHeight')
-cms_html_height_next = None
-while cms_html_height != cms_html_height_next:
+
+while True:
+    # 滚动屏幕
     cms_html_height = driver.execute_script('return document.documentElement.scrollHeight')
-    driver.execute_script(
-        'document.documentElement.scrollTop = document.documentElement.scrollHeight'
+    cms_html_height_next = None
+    while cms_html_height != cms_html_height_next:
+        cms_html_height = driver.execute_script('return document.documentElement.scrollHeight')
+        driver.execute_script(
+            'document.documentElement.scrollTop = document.documentElement.scrollHeight'
+        )
+        time.sleep(1)
+        cms_html_height_next = driver.execute_script('return document.documentElement.scrollHeight')
+
+        
+    # 课程列表
+    course_ul = WebDriverWait(driver, 3).until(
+        EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div[2]/div/div[1]/div/div[2]/div[3]/div/div/div[2]/div/ul'))
     )
-    time.sleep(1)
-    cms_html_height_next = driver.execute_script('return document.documentElement.scrollHeight')
+    course_li_list = course_ul.find_elements(By.TAG_NAME, 'li')
 
-    
-# 课程列表
-course_ul = WebDriverWait(driver, 3).until(
-    EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div[2]/div/div[1]/div/div[2]/div[3]/div/div/div[2]/div/ul'))
-)
-course_li_list = course_ul.find_elements(By.TAG_NAME, 'li')
-
-for course_li in course_li_list:
-    course_title = course_li.find_element(By.XPATH, ".//div[@class='stu-xk-bot-con-title2']/div[1]")
-    course_code = course_title.text.split('-')[0]
-    print(course_title.text)
-    # print(course_code)
-    
-    if course_code in courses_wanted:        
-        registration_button = course_li.find_element(By.XPATH, ".//div[@class='stu-xk-bot-r-unfiltrate']/button[@class='ant-btn ant-btn-primary ant-btn-background-ghost']")
-        course_selected = False
-        while not course_selected:
-            registration_button.click()
-            time.sleep(2)
-            button_text = registration_button.find_element(By.XPATH, './span').text
-            if button_text == '选 课':
+    for course_wanted in courses_wanted:
+        for course_li in course_li_list:
+            course_title = course_li.find_element(By.XPATH, ".//div[@class='stu-xk-bot-con-title2']/div[1]").text
+            course_code = course_title.split('-')[0]
+            # print(course_title)
+            # print(course_code)
+            
+            if course_code == course_wanted:
+                # 遍历到想选的那门课
+                registration_button = course_li.find_element(By.XPATH, ".//div[@class='stu-xk-bot-r-unfiltrate']/button[@class='ant-btn ant-btn-primary ant-btn-background-ghost']")
                 course_selected = False
-            elif button_text == '退 课':
-                course_selected = True
-            else:
-                raise ValueError(f'course_selected = {course_selected}')
+                button_text = registration_button.find_element(By.XPATH, './span').text
+                if button_text == '选 课':
+                    course_selected = False
+                elif button_text == '退 课':
+                    course_selected = True
+                else:
+                    raise ValueError(f'course_selected = {course_selected}')
+                
+                free_count = int(course_li.find_element(By.XPATH, "./div[2]/div[3]/p[2]").text)
+                print(f'{course_title} 剩余空位：{free_count}')
+                
+                if free_count > 0 and not course_selected:
+                    # registration_button.click()
+                    print(f'{course_title}已点击')
+
+    # 刷新屏幕
+    driver.refresh()
+    time.sleep(2)
 
 
-
-time.sleep(100)
 driver.quit()
